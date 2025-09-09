@@ -1,0 +1,578 @@
+body {
+  font-family: "Poppins", sans-serif;
+  overflow-y: scroll;
+}
+html, body {
+  height: 100%;
+  background: #ececec;
+}
+footer {
+	margin-top: 60px;
+}
+.page-wrapper {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.mainCon {
+	padding-top: 50px;
+}
+.loginCon {
+    width: 40%;
+    margin: 0 auto;
+}
+.content {
+  flex: 1;
+}
+
+label {
+  font-weight: 600;
+  font-size: 16px;
+}
+/* Nice input fields */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #912e2e;
+  box-shadow: 0 0 0 0.2rem rgba(145, 46, 46, 0.25);
+}
+p, td {
+	font-size: 16px;
+}
+h1, h2, h4, h5 {
+	color: #912e2e;
+	font-weight: 600;
+}
+h2 {
+	font-weight: 700;
+	margin: 0 auto;
+  font-size: 40px;
+  margin-bottom: 40px;
+  padding-bottom: 10px;
+  display: table;
+  border-bottom: 4px solid #212529;
+}
+h3 {
+  color: #333;
+  font-weight: 700;
+}
+.h5, h5 {
+  font-size: 26px;
+}
+.h4Divider {
+   width: 100%; 
+   text-align: center; 
+   border-bottom: 1px solid #000; 
+   line-height: 0.1em;
+   margin: 60px 0 60px;
+} 
+.h4Divider span{ 
+    background:#ececec; 
+    padding:0 10px; 
+}
+.navbar{
+	width: 100%;
+}
+.ck-editor__editable_inline {
+  min-height: 250px;
+  position: static !important;
+}
+.daytour-overnight .ck-editor__editable_inline {
+  min-height: auto;
+  position: static !important;
+}
+.flight .ck-editor__editable_inline {
+  min-height: 190px;
+  position: static !important;
+}
+.ck-editor__editable {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+/** Rejseplan **/
+.itineraryCon {
+}
+.itinBanner {
+  background-image: url("https://vietnam-rejser.dk/wp-content/uploads/Forside-Banner-bigger.webp");
+  height: 500px;
+  background-position: center;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+}
+.itinBanner h2 {
+  text-align: center;
+  text-shadow: 4px 4px #00000054;
+  border-bottom: unset;
+  font-size: 60px;
+  color: white;
+}
+.itinInfo {
+  max-width: 1000px;
+  position: relative;
+  top: -120px;
+  flex-direction: column;
+  align-items: center;
+}
+.itinNumber p{
+  background-color: white;
+  margin-bottom: 0;
+  padding: 5px 10px;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+.itinBanner .row.rounded.bg-light{
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+.masonry {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+.masonry img {
+	width: 100%;
+	height: auto;
+	object-fit: cover;
+}
+.card-header {
+	background-color: #912e2e;
+	color: white;
+}
+.card-header strong {
+	color: white;
+	font-weight: 600;
+}
+tbody, td, tfoot, th, thead, tr {
+    vertical-align: middle;
+}
+body th {
+    background: #912e2e !important;
+    color: white !important;
+}
+#days-container li {
+    background: #f7f7f7;
+}
+#days-container li:nth-child(odd){
+    background: white;
+}
+.day-block-modern {
+  border-left: 5px solid #912e2e;
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+.day-block-modern h4 {
+  font-size: 22px;
+  color: #212529;
+  font-weight: 600;
+}
+.day-block-modern p {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+.day-block-modern .badge {
+  font-size: 14px;
+  background: #912e2e;
+}
+.day-block-0 {
+  margin-top: 0 !important;
+  border-top: unset !important;
+  border-top-left-radius: unset !important;
+  border-top-right-radius: unset !important;
+}
+.day-block {
+  border-left: 4px solid #912e2e !important;
+  padding: 30px !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.day-block .strongH3 {
+  color: #912e2e;
+  font-size: 18px;
+}
+.drag-handle {
+  cursor: move;
+  font-size: 20px;
+  color: #912e2e;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  user-select: none;
+}
+.day-block h3 {
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+.day-block .form-control,
+.day-block .form-select {
+  margin-bottom: 12px;
+}
+.day-block .paddingzero {
+  margin-bottom: 0;
+}
+.move-up, .move-down {
+  background: #177d4e;
+  color: white;
+
+}
+.itineraryInfo .p-2 {
+  background: rgb(248 249 250);
+  margin: 0 10px 0 10px;
+  padding: 20px !important;
+}
+.itineraryInfo p {
+  margin-bottom: 0;
+}
+.itineraryInfo strong{
+  display: table;
+    font-size: 18px;
+}
+.day-block.itin-bottom {
+  border-left: 4px solid #FFCD00 !important;
+}
+.itin-header .col:nth-child(1) {
+  
+}
+.itin-header .col:nth-child(2) {
+  
+}
+body .day-block.itineraryInfo.itin-top.itin-aProfile {
+  background-color: transparent !important;
+  box-shadow: none;
+  border: none !important;
+}
+.itin-aProfile img {
+  width: 100px;
+  height: 100px;
+  float: left;
+  object-fit: cover;
+  margin-right: 15px;
+}
+.cusInfo {
+  width: 50%;
+}
+.cus-itin-top {
+  display: flex;
+  border-left: none !important;
+  box-shadow: none !important;
+}
+.itin-price {
+  flex-direction: column;
+}
+.itin-header {
+  margin-bottom: 0 !important;
+  border-bottom: unset !important;
+  border-bottom-left-radius: unset !important;
+  border-bottom-right-radius: unset !important;
+  padding-bottom: 20px !important;
+}
+.itin-header h2{
+  display: inline-block;
+  border: none;
+  margin: unset;
+}
+.itin-header h2:after {
+  background-color: #333;
+  content: '';
+  display: block;
+  height: 3px;
+  width: 90px;
+  margin-top: 5px;
+}
+.itin-top strong, .itin-price strong{
+  font-size: 16px;
+}
+.itin-price .col-6 strong{
+  float: left;
+}
+.itin-price .col-6 p{
+  text-align: right;
+}
+.itin-logo {
+  width: 240px;
+  float: right;
+}
+.itin-logo.itin-bottom {
+  width: 340px;
+  float: right;
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+/** Header **/
+.nav-logo{
+	width: 155px;
+}
+.nav-item{
+	margin-left: 20px;
+	font-weight: 600;
+}
+.navbar-nav span{
+	margin-left: 20px;
+	font-weight: 600;
+}
+.navlogout li{
+    margin-left: 0px;
+    border-left: 2px solid rgb(255, 255, 255, 0.55);
+    padding-left: 4px;
+}
+.navlogout li a, .navbar-nav span{
+    padding-top: 0;
+    padding-bottom: 0;
+}
+.customCon {
+	width: 600px;
+	border-radius: 5px;
+	padding: 10px;
+	position: absolute;
+	margin-top: -25px;
+	margin-left: -300px;
+	top: 40%;
+	left: 50%;
+}
+.addUserRow {
+  margin-top: 10px;
+}
+.form-control,
+.form-select {
+  padding: 0.6rem 1rem;
+}
+.mainCon .g-3, .gy-3 {
+    align-items: center;
+}.tour-search-dropdown {
+  position: relative;
+}
+.tour-search-dropdown {
+  position: relative;
+}
+
+.tour-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.tour-search-input:focus {
+  outline: none;
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.tour-options-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ced4da;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+  display: none;
+}
+
+.tour-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.tour-option:hover {
+  background-color: #f8f9fa;
+}
+
+.tour-option:last-child {
+  border-bottom: none;
+}
+
+.tour-option.highlighted {
+  background-color: #e7f3ff;
+  color: #0d6efd;
+}
+
+.tour-option mark {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 1px 2px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+.search-stats {
+  padding: 4px 12px;
+  font-size: 0.875rem;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-style: italic;
+}
+
+.no-results {
+  padding: 8px 12px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Validation styles */
+.is-invalid {
+  border-color: #dc3545 !important;
+  background-color: #fff5f5;
+}
+
+.is-invalid:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.validation-error-summary {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: none;
+}
+
+.validation-error-summary h6 {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.validation-error-summary ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.day-block.has-errors {
+  border-color: #dc3545;
+  background-color: #fff5f5;
+}
+.sticky-save-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1050;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: none !important; /* Force hidden by default */
+}
+.sticky-save-btn.show {
+  display: block !important; /* Force visible when shown */
+}
+.sticky-save-btn.show {
+  display: block;
+}
+
+.sticky-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Hide original button when sticky is visible */
+.original-save-hidden {
+  visibility: hidden;
+}
+
+/* Day block move animations */
+.day-block {
+  transition: all 0.3s ease;
+}
+
+.day-block.moving {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #0d6efd;
+  background-color: #f8f9ff;
+  z-index: 10;
+  position: relative;
+}
+
+.day-block.move-target {
+  border-color: #198754;
+  background-color: #f0fff4;
+  transform: translateY(-2px);
+}
+
+.day-block.slide-up {
+  animation: slideUp 0.4s ease;
+}
+
+.day-block.slide-down {
+  animation: slideDown 0.4s ease;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Success flash animation */
+.day-block.moved-success {
+  animation: moveSuccess 0.6s ease;
+}
+
+@keyframes moveSuccess {
+  0% {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+  }
+  50% {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+  }
+  100% {
+    background-color: inherit;
+    border-color: inherit;
+  }
+}
+/* Mobile versio */
+@media only screen and (max-width: 676px) {
+  .loginCon {
+    	width: 80vw;
+    	margin: 0 auto;
+	}
+}
