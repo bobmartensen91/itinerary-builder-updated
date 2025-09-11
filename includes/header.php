@@ -67,8 +67,8 @@ if (!defined('APP_BOOTSTRAP_LOADED')) {
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tours.php' ? 'active' : '' ?>" 
-                   href="<?= appUrl('tours.php') ?>">
+                <a class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'api_tours.php' ? 'active' : '' ?>" 
+                   href="<?= appUrl('api_tours.php') ?>">
                    <i class="fas fa-map-marked-alt me-1"></i>Tours
                 </a>
               </li>
@@ -76,12 +76,6 @@ if (!defined('APP_BOOTSTRAP_LOADED')) {
                 <a class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'customers.php' ? 'active' : '' ?>" 
                    href="<?= appUrl('customers.php') ?>">
                    <i class="fas fa-users me-1"></i>Guest
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], 'users/') ? 'active' : '' ?>" 
-                   href="<?= appUrl('users/users.php') ?>">
-                   <i class="fas fa-user-cog me-1"></i>Users
                 </a>
               </li>
               <?php if ($_SESSION['role'] === 'admin'): ?>
@@ -160,6 +154,10 @@ if (!defined('APP_BOOTSTRAP_LOADED')) {
             <i class="fas fa-sign-out-alt me-1"></i>
             <span class="d-none d-md-inline">Log out</span>
             <span class="d-md-none"><i class="fas fa-sign-out-alt"></i></span>
+          </a>
+          <a class="btn btn-outline-light btn-sm ms-3 <?= str_contains($_SERVER['REQUEST_URI'], 'users/') ? 'active' : '' ?>" 
+             href="<?= appUrl('users/users.php') ?>">
+             <i class="fas fa-user-cog me-1"></i>Users
           </a>
         </div>
       </div>

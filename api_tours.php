@@ -10,6 +10,9 @@ include 'includes/header.php';
   <button id="refresh-btn" class="btn btn-outline-primary">
     <i class="fas fa-sync-alt"></i> Refresh
   </button>
+  <button class="btn btn-success" onclick="tourManager.saveAllPages()">
+    <i class="fas fa-save"></i> Save All
+  </button>
   <div class="form-check">
     <input class="form-check-input" type="checkbox" id="show-saved-only">
     <label class="form-check-label" for="show-saved-only">
@@ -20,7 +23,11 @@ include 'includes/header.php';
     <small class="text-muted">Total: <span id="total-count">0</span> | Showing: <span id="showing-count">0</span></small>
   </div>
 </div>
-
+<!-- Progress bar -->
+<div class="progress" style="height: 25px; display:none;">
+    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+         role="progressbar" style="width:0%">0%</div>
+</div>
 <table class="table table-bordered table-hover">
   <thead class="table-dark">
     <tr>
@@ -43,41 +50,6 @@ include 'includes/header.php';
     </tr>
   </tbody>
 </table>
-
-<style>
-.table-row-fade-in {
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.image-gallery img {
-  transition: transform 0.2s ease;
-}
-
-.image-gallery img:hover {
-  transform: scale(1.1);
-  z-index: 1000;
-  position: relative;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-.status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 5px;
-}
-
-.status-saved { background-color: #28a745; }
-.status-new { background-color: #ffc107; }
-.status-saving { background-color: #007bff; }
-.status-error { background-color: #dc3545; }
-</style>
 
 <script>
 class TourManager {
@@ -213,7 +185,6 @@ class TourManager {
       }, {});
     }
 
-    // Process in batches to avoid overwhelming the server
     const batches = [];
     for (let i = 0; i < uncachedIds.length; i += MAX_CONCURRENT) {
       batches.push(uncachedIds.slice(i, i + MAX_CONCURRENT));
@@ -224,7 +195,7 @@ class TourManager {
     for (const batch of batches) {
       const promises = batch.map(async (id) => {
         if (this.activeRequests.has(`media-${id}`)) {
-          return null; // Skip if already fetching
+          return null;
         }
         
         this.activeRequests.add(`media-${id}`);
@@ -254,7 +225,6 @@ class TourManager {
       });
     }
 
-    // Add cached results
     mediaIds.forEach(id => {
       if (this.cache.mediaCache.has(id)) {
         results[id] = this.cache.mediaCache.get(id);
@@ -264,61 +234,85 @@ class TourManager {
     return results;
   }
 
-  // Main load function with better error handling
+  // ✅ Main load function (robust pagination)
   async loadPages() {
     this.showLoading();
-    
-    try {
-      const [savedMap, pagesResponse] = await Promise.all([
-        this.fetchSavedMap(),
-        fetch(`${this.API_BASE}/pages?per_page=50&exclude=${this.EXCLUDED_PAGES.join(',')}`)
-      ]);
 
-      if (!pagesResponse.ok) {
-        throw new Error(`HTTP ${pagesResponse.status}: ${pagesResponse.statusText}`);
+    try {
+      const savedMap = await this.fetchSavedMap();
+
+      const PER_PAGE = 100; // WP max
+      let allPages = [];
+      let pageNum = 1;
+      const MAX_PAGE_GUARD = 50; // safety guard to avoid infinite loop
+
+      while (pageNum <= MAX_PAGE_GUARD) {
+        const resp = await fetch(
+          `${this.API_BASE}/pages?per_page=${PER_PAGE}&page=${pageNum}&exclude=${this.EXCLUDED_PAGES.join(',')}`
+        );
+
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        }
+
+        const pages = await resp.json();
+        if (!Array.isArray(pages) || pages.length === 0) break;
+
+        allPages = allPages.concat(pages);
+
+        // If this page contained fewer items than PER_PAGE, we've reached the last page
+        if (pages.length < PER_PAGE) break;
+
+        pageNum++;
       }
 
-      const pages = await pagesResponse.json();
-      
-      // Cache the results
-      this.cache.pages = pages;
+      // Cache results
+      this.cache.pages = allPages;
       this.cache.lastFetch = Date.now();
 
-      // Get all media IDs for batch fetching
-      const mediaIds = pages
+      // Collect media IDs
+      const mediaIds = allPages
         .filter(page => page.featured_media && page.featured_media > 0)
         .map(page => page.featured_media);
 
       // Fetch media in batch
       const mediaResults = await this.fetchMediaBatch(mediaIds);
 
-      await this.renderPages(pages, savedMap, mediaResults);
-      this.updateCounts(pages.length, pages.length);
-      
+      // Render and update counts
+      await this.renderPages(allPages, savedMap, mediaResults);
+      this.updateCounts(allPages.length, allPages.length);
+
+      // If "show saved only" is checked, apply filter
+      const showSavedOnlyChecked = document.getElementById('show-saved-only').checked;
+      if (showSavedOnlyChecked) {
+        this.filterPages(true);
+      }
+
     } catch (err) {
-      console.error('loadPages error:', err);
+      console.error("loadPages error:", err);
       this.showError(`Error loading pages: ${err.message}`);
     }
   }
 
-  // Render pages with better performance
+  // ✅ Fixed renderPages (no fragment/timer bug)
   async renderPages(pages, savedMap, mediaResults = {}) {
     const tableBody = document.getElementById('api-pages-table');
+    // build document fragment synchronously (no delayed appends)
     const fragment = document.createDocumentFragment();
 
-    for (const [index, page] of pages.entries()) {
-      const row = await this.createPageRow(page, savedMap, mediaResults);
-      row.classList.add('table-row-fade-in');
-      
-      // Add slight delay for animation effect
-      setTimeout(() => fragment.appendChild(row), index * 50);
+    for (const page of pages) {
+      try {
+        const row = await this.createPageRow(page, savedMap, mediaResults);
+        fragment.appendChild(row);
+      } catch (err) {
+        console.error('Error creating row for page', page?.id, err);
+        // skip this row but continue rendering others
+      }
     }
 
-    // Clear and append all at once
-    setTimeout(() => {
-      tableBody.innerHTML = '';
-      tableBody.appendChild(fragment);
-    }, 100);
+    // Replace table body once
+    tableBody.innerHTML = '';
+    tableBody.appendChild(fragment);
   }
 
   // Create page row with improved structure
@@ -334,11 +328,15 @@ class TourManager {
 
     // Get description
     let rawDescription = '';
-    if (page.acf?.description?.trim()) {
-      rawDescription = page.acf.description;
-    } else if (page.content?.rendered) {
-      rawDescription = page.content.rendered;
-    } else {
+    try {
+      if (page.acf?.description?.trim()) {
+        rawDescription = page.acf.description;
+      } else if (page.content?.rendered) {
+        rawDescription = page.content.rendered;
+      } else {
+        rawDescription = '(No description available)';
+      }
+    } catch (err) {
       rawDescription = '(No description available)';
     }
 
@@ -354,7 +352,7 @@ class TourManager {
 
     // Featured image cell
     const featuredImgUrl = mediaResults[page.featured_media] || '';
-    const imgCell = this.createImageCell(featuredImgUrl, page.title.rendered);
+    const imgCell = this.createImageCell(featuredImgUrl, page.title?.rendered || '');
     tr.appendChild(imgCell);
 
     // Gallery cell
@@ -378,11 +376,11 @@ class TourManager {
     if (isSaved) {
       const a = document.createElement('a');
       a.href = `api_tours_view.php?id=${encodeURIComponent(localId)}`;
-      a.textContent = this.decodeHTML(page.title.rendered);
+      a.textContent = this.decodeHTML(page.title?.rendered || '');
       a.className = 'text-decoration-none';
       td.appendChild(a);
     } else {
-      td.textContent = this.decodeHTML(page.title.rendered);
+      td.textContent = this.decodeHTML(page.title?.rendered || '');
     }
     
     return td;
@@ -393,7 +391,7 @@ class TourManager {
     td.style.whiteSpace = 'pre-wrap';
     td.style.maxHeight = '100px';
     td.style.overflow = 'hidden';
-    td.textContent = description + (description.length >= 300 ? '...' : '');
+    td.textContent = description + (description.length >= 100 ? '...' : '');
     return td;
   }
 
@@ -468,20 +466,20 @@ class TourManager {
     return td;
   }
 
-  // Improved save function with better UX
+  // Improved save function with better error handling
   async savePage(page, rawDescription, featuredImgUrl, acf, btn) {
     const row = btn.closest('tr');
     const statusCell = row.querySelector('.status-cell');
     const indicator = statusCell.querySelector('.status-indicator');
-    
+
     btn.disabled = true;
     btn.textContent = 'Saving...';
     indicator.className = 'status-indicator status-saving';
-    
+
     try {
       const galleryImages = this.extractGalleryImages(acf);
       const formData = new FormData();
-      
+
       formData.append('wp_id', page.id);
       formData.append('title', page.title.rendered);
       formData.append('description', rawDescription);
@@ -494,12 +492,13 @@ class TourManager {
         body: formData
       });
 
+      // Always read body ONCE
+      const text = await resp.text();
       let result;
       try {
-        result = await resp.json();
+        result = JSON.parse(text);
       } catch (err) {
-        const txt = await resp.text();
-        console.error("Invalid JSON from server:", txt);
+        console.error("Invalid JSON from server:", text);
         throw new Error('Invalid server response');
       }
 
@@ -508,13 +507,13 @@ class TourManager {
         this.cache.savedMap = null; // Force refresh
         const newSavedMap = await this.fetchSavedMap(false);
         const newLocalId = newSavedMap[page.id];
-        
+
         // Update UI
         row.classList.add('table-success');
         row.dataset.saved = 'true';
         indicator.className = 'status-indicator status-saved';
         indicator.title = 'Saved';
-        
+
         // Update title cell if needed
         if (newLocalId) {
           const titleCell = row.querySelector('td:first-child');
@@ -525,17 +524,17 @@ class TourManager {
           a.className = 'text-decoration-none';
           titleCell.appendChild(a);
         }
-        
+
         btn.textContent = 'Saved ✓';
         setTimeout(() => {
           btn.textContent = 'Update';
           btn.disabled = false;
         }, 2000);
-        
+
       } else {
         throw new Error(result.message || 'Unknown error');
       }
-      
+
     } catch (err) {
       console.error('Save error:', err);
       indicator.className = 'status-indicator status-error';
@@ -546,6 +545,61 @@ class TourManager {
         btn.disabled = false;
       }, 3000);
     }
+  }
+
+  // ✅ Save all pages with progress bar
+  async saveAllPages() {
+    const rows = document.querySelectorAll('#api-pages-table tr[data-page-id]');
+    if (!rows.length) return;
+
+    const saveAllBtn = document.querySelector('button.btn-success'); // your "Save All" button
+    saveAllBtn.disabled = true;
+    saveAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    // Show progress bar
+    document.querySelector('.progress').style.display = 'block';
+    const progressBar = document.getElementById('progressBar');
+    progressBar.style.width = '0%';
+    progressBar.innerText = '0%';
+
+    let successCount = 0;
+    let errorCount = 0;
+    let saved = 0;
+
+    for (const row of rows) {
+      const btn = row.querySelector('.save-btn');
+      if (!btn) continue;
+
+      try {
+        // get page data from row
+        const pageId = row.dataset.pageId;
+        const page = this.cache.pages.find(p => p.id == pageId);
+        if (!page) continue;
+
+        const featuredImgUrl = row.querySelector('td:nth-child(3) img')?.src || '';
+        const rawDescription = page.acf?.description || page.content?.rendered || '';
+        const acf = page.acf || {};
+
+        // directly call savePage() instead of btn.click()
+        await this.savePage(page, rawDescription, featuredImgUrl, acf, btn);
+        successCount++;
+      } catch (err) {
+        console.error('Error saving row:', err);
+        errorCount++;
+      }
+
+      saved++;
+      const percent = Math.round((saved / rows.length) * 100);
+      progressBar.style.width = percent + '%';
+      progressBar.innerText = percent + '%';
+    }
+
+    saveAllBtn.innerHTML = `✅ Saved ${successCount} | ❌ ${errorCount}`;
+    setTimeout(() => {
+      saveAllBtn.innerHTML = '<i class="fas fa-save"></i> Save All';
+      saveAllBtn.disabled = false;
+      document.querySelector('.progress').style.display = 'none';
+    }, 4000);
   }
 
   extractGalleryImages(acf) {
@@ -578,8 +632,9 @@ class TourManager {
 }
 
 // Initialize when DOM is ready
+// ✅ Make TourManager available globally
 document.addEventListener('DOMContentLoaded', () => {
-  new TourManager();
+  window.tourManager = new TourManager();
 });
 </script>
 

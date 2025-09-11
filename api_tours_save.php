@@ -34,9 +34,13 @@ function simpleCleanDescription($rawDescription) {
     return trim($cleaned);
 }
 
+// Get POST values
 $wp_id = $_POST['wp_id'] ?? null;
 $title = $_POST['title'] ?? '';
-$content = $_POST['description'] ?? ''; // Get description but save as content
+$title = html_entity_decode($title, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // ✅ Fixes &#8211; to real dash
+$title = trim($title);
+
+$content = $_POST['description'] ?? '';
 $acf = $_POST['acf'] ?? '{}';
 $featured_image = $_POST['featured_image'] ?? '';
 $image1 = $_POST['image1'] ?? '';
@@ -54,6 +58,9 @@ $cleanedContent = simpleCleanDescription($content);
 
 // Check if page already exists
 $stmt = $conn->prepare("SELECT id FROM tours_api WHERE wp_id = ?");
+if (!$stmt) {
+    die(json_encode(['success' => false, 'message' => 'Prepare failed (SELECT): ' . $conn->error]));
+}
 $stmt->bind_param("i", $wp_id);
 $stmt->execute();
 $stmt->store_result();
@@ -61,17 +68,31 @@ $stmt->store_result();
 if ($stmt->num_rows > 0) {
     // Update
     $stmt->close();
-    $stmt = $conn->prepare("UPDATE tours_api SET title=?, content=?, acf=?, featured_image=?, image1=?, image2=?, image3=?, image4=?, updated_at=NOW() WHERE wp_id=?");
+    $stmt = $conn->prepare("UPDATE tours_api 
+        SET title=?, description=?, acf=?, featured_image=?, image1=?, image2=?, image3=?, image4=?, updated_at=NOW() 
+        WHERE wp_id=?");
+    if (!$stmt) {
+        die(json_encode(['success' => false, 'message' => 'Prepare failed (UPDATE): ' . $conn->error]));
+    }
     $stmt->bind_param("ssssssssi", $title, $cleanedContent, $acf, $featured_image, $image1, $image2, $image3, $image4, $wp_id);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        die(json_encode(['success' => false, 'message' => 'Execute failed (UPDATE): ' . $stmt->error]));
+    }
     $stmt->close();
     echo json_encode(['success' => true, 'message' => 'Updated']);
 } else {
     // Insert
     $stmt->close();
-    $stmt = $conn->prepare("INSERT INTO tours_api (wp_id, title, content, acf, featured_image, image1, image2, image3, image4) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO tours_api 
+        (wp_id, title, description, acf, featured_image, image1, image2, image3, image4) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$stmt) {
+        die(json_encode(['success' => false, 'message' => 'Prepare failed (INSERT): ' . $conn->error]));
+    }
     $stmt->bind_param("issssssss", $wp_id, $title, $cleanedContent, $acf, $featured_image, $image1, $image2, $image3, $image4);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        die(json_encode(['success' => false, 'message' => 'Execute failed (INSERT): ' . $stmt->error]));
+    }
     $stmt->close();
     echo json_encode(['success' => true, 'message' => 'Inserted']);
 }

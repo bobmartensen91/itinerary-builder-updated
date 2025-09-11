@@ -1,16 +1,7 @@
 <?php
-// Simple fallback approach - works without PathHelper
+// users/users.php
+require_once '../includes/bootstrap.php';
 require_once '../includes/auth.php';
-require_once '../includes/db.php';
-
-// Try to load PathHelper for navigation links
-$usePathHelper = false;
-if (file_exists('../includes/path_helper.php')) {
-    require_once '../includes/path_helper.php';
-    $usePathHelper = true;
-}
-
-include '../includes/header.php';
 
 if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'agent') {
     die('<div class="alert alert-danger">Adgang nægtet.</div>');
@@ -25,8 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
     echo '<div class="alert alert-danger">Bruger slettet.</div>';
 }
 
+// Handle password reset
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_user_id'])) {
+    $id = intval($_POST['reset_user_id']);
+    $newPassword = substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'), 0, 10);
+    $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+    
+    $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+    $stmt->bind_param("si", $hashedPassword, $id);
+    $stmt->execute();
+    
+    echo '<div class="alert alert-success">Adgangskode nulstillet. Ny kode: <strong>' . htmlspecialchars($newPassword) . '</strong></div>';
+}
+
 // Get users
 $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
+
+include '../includes/header.php';
 ?>
 
 <div class="container-fluid">
@@ -41,7 +47,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
                     </h1>
                     <p class="text-muted mb-0">Administrer brugere og deres adgang</p>
                 </div>
-                <a href="<?= $usePathHelper ? PathHelper::usersPath('create_user.php') : 'create_user.php' ?>" class="btn btn-primary">
+                <a href="<?= appUrl('users/create_user.php') ?>" class="btn btn-primary">
                     <i class="fas fa-user-plus me-2"></i>
                     Tilføj ny bruger
                 </a>
@@ -58,8 +64,12 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
                         <div class="card-body">
                             <!-- User Photo -->
                             <div class="text-center mb-3">
-                                <?php if (!empty($user['photo']) && file_exists('../' . $user['photo'])): ?>
-                                    <img src="<?= '../' . htmlspecialchars($user['photo']) ?>" 
+                                <?php 
+                                $photoPath = $user['photo'];
+                                $photoExists = !empty($photoPath) && file_exists(appPath($photoPath));
+                                ?>
+                                <?php if ($photoExists): ?>
+                                    <img src="<?= appUrl($photoPath) ?>" 
                                          class="rounded-circle border" 
                                          style="width: 80px; height: 80px; object-fit: cover;"
                                          alt="Profilbillede">
@@ -100,7 +110,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
                         <!-- Card Footer with Actions -->
                         <div class="card-footer bg-transparent border-0">
                             <div class="d-grid gap-2">
-                                <a href="<?= $usePathHelper ? PathHelper::usersPath('user_profile.php?id=' . $user['id']) : 'user_profile.php?id=' . $user['id'] ?>" 
+                                <a href="<?= appUrl('users/user_profile.php?id=' . $user['id']) ?>" 
                                    class="btn btn-outline-primary btn-sm">
                                     <i class="fas fa-edit me-1"></i>
                                     Rediger profil
@@ -140,7 +150,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
                     </div>
                     <h3 class="text-muted mb-3">Ingen brugere endnu</h3>
                     <p class="text-muted mb-4">Kom i gang med at oprette den første bruger</p>
-                    <a href="<?= $usePathHelper ? PathHelper::usersPath('create_user.php') : 'create_user.php' ?>" class="btn btn-primary btn-lg">
+                    <a href="<?= appUrl('users/create_user.php') ?>" class="btn btn-primary btn-lg">
                         <i class="fas fa-user-plus me-2"></i>
                         Opret den første bruger
                     </a>
